@@ -24,6 +24,7 @@ mensagem(){
 
 verifica_distro(){
 	if [[ -f "$OS_RELEASE" ]]; then
+		# shellcheck disable=SC1090
 		source "$OS_RELEASE"
 
 		if [[ "$ID" == "fedora" ]]; then
