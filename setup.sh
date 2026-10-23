@@ -5,6 +5,8 @@ set -euo pipefail
 OS_RELEASE=/etc/os-release
 FEDORA_VER=$(rpm -E %fedora)
 
+PACOTES_REMOVER="okular libreoffice-*"
+
 RPM_FREE_BASE="https://mirrors.rpmfusion.org/free/fedora"
 RPM_FREE_PKG="rpmfusion-free-release-${FEDORA_VER}.noarch.rpm"
 RPM_FREE_URL="${RPM_FREE_BASE}/${RPM_FREE_PKG}"
@@ -69,6 +71,21 @@ verifica_permissao(){
 	fi
 }
 
+remover_programas(){
+	if dnf remove -y $PACOTES_REMOVER &>/dev/null; then
+		mensagem "SUCESSO" "Aplicativos removidos com sucesso"
+	else
+		mensagem "ERRO" "Falha ao remover os pacotes"
+		exit 1
+	fi
+	
+	if dnf autoremove -y &>/dev/null; then
+		mensagem "SUCESSO" "Limpeza de dependências concluída"
+	else
+		mensagem "ERRO" "Falha ao executar o autoremove"
+	fi
+}
+
 repositorios_terceiros(){
 	#RPM Fusion Free
 	if rpm -q rpmfusion-free-release &>/dev/null; then
@@ -120,4 +137,5 @@ clear
 verifica_permissao
 verifica_distro
 verifica_internet
+remover_programas
 repositorios_terceiros
