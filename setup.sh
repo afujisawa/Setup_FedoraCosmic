@@ -152,7 +152,7 @@ atualizar_sistema(){
 instalar_pacote() {
 	local gerenciador=$1
 	local pacote=$2
-	
+
 	case $gerenciador in
 		"dnf")
 			if rpm -q "$pacote" &>/dev/null; then
@@ -199,6 +199,28 @@ instalar_lote() {
 	done
 }
 
+instalar_via_curl() {
+	local nome="$1"
+	local url="$2"
+	local condicao_verificacao="$3"
+	local argumento_extra="${4:-}"
+
+	if [ -n "$condicao_verificacao" ]; then
+		if sudo -u "$USUARIO_REAL" env HOME="$HOME_REAL" bash -c "$condicao_verificacao" &> /dev/null; then
+			mensagem "ALERTA" "$nome já está instalado para o usuário $USUARIO_REAL"
+			return 0
+		fi
+	fi
+
+	mensagem "INFO" "Instalando $nome via script (curl)"
+	if sudo -u "$USUARIO_REAL" env HOME="$HOME_REAL" sh -c "$(curl -fsSL "$url")" "" "$argumento_extra" &> /dev/null; then
+		mensagem "SUCESSO" "$nome instalado com sucesso"
+	else
+		mensagem "ERRO" "Falha ao instalar o $nome"
+		return 1
+	fi
+}
+
 # Execução
 clear
 verifica_permissao
@@ -208,3 +230,12 @@ remover_programas
 repositorios_terceiros
 atualizar_sistema
 instalar_lote
+
+instalar_via_curl "Oh My Zsh" \
+"https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" \
+"[ -d '$HOME_REAL/.oh-my-zsh' ]" \
+"--unattended"
+
+instalar_via_curl "Zed Editor" \
+"https://zed.dev/install.sh" \
+"[ -x '$HOME_REAL/.local/bin/zed' ]"
