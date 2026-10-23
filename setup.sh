@@ -9,7 +9,7 @@ USUARIO_REAL="${SUDO_USER:-$USER}"
 HOME_REAL="$(getent passwd "$USUARIO_REAL" | cut -d: -f6)"
 
 PACOTES_REMOVER="okular nheko rhythmbox libreoffice-*"
-PACOTES_DNF="git vim zsh tmux ShellCheck shfmt fastfetch vlc zed"
+PACOTES_DNF="git vim-enhanced zsh zsh-autocomplete zsh-syntax-highlighting tmux ShellCheck shfmt fastfetch vlc zed"
 PACOTES_FLATPAK=""
 
 RPM_FREE_BASE="https://mirrors.rpmfusion.org/free/fedora"
@@ -244,6 +244,25 @@ instalar_via_curl() {
 	fi
 }
 
+instalar_via_git() {
+	local nome="$1"
+	local url="$2"
+	local destino="$3"
+
+	if [ -d "$destino" ]; then
+		mensagem "ALERTA" "$nome já está instalado para o usuário $USUARIO_REAL"
+		return 0
+	fi
+
+	mensagem "INFO" "Clonando e instalando $nome"
+	if sudo -u "$USUARIO_REAL" env HOME="$HOME_REAL" git clone "$url" "$destino" &>/dev/null; then
+		mensagem "SUCESSO" "$nome instalado com sucesso"
+	else
+		mensagem "ERRO" "Falha ao clonar ou instalar o $nome"
+		return 1
+	fi
+}
+
 instalar_codecs_multimedia() {
 	mensagem "INFO" "Iniciando a instalação de codecs, multimedia e hardware"
 	dnf install -y ffmpeg gstreamer1-plugins-bad-freeworld gstreamer1-plugin-openh264 --allowerasing &>/dev/null
@@ -289,8 +308,8 @@ instalar_via_curl "Oh My Zsh" \
 	"[ -d '$HOME_REAL/.oh-my-zsh' ]" \
 	"--unattended"
 
-instalar_via_curl "Zed Editor" \
-	"https://zed.dev/install.sh" \
-	"[ -x '$HOME_REAL/.local/bin/zed' ]"
+instalar_via_git "Tmux Plugin Manager (TPM)" \
+	"https://github.com/tmux-plugins/tpm" \
+	"$HOME_REAL/.tmux/plugins/tpm"
 
 exibir_resumo
