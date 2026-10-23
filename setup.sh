@@ -6,6 +6,8 @@ OS_RELEASE=/etc/os-release
 FEDORA_VER=$(rpm -E %fedora)
 
 PACOTES_REMOVER="okular nheko rhythmbox libreoffice-*"
+PACOTES_DNF="git"
+PACOTES_FLATPAK=""
 
 RPM_FREE_BASE="https://mirrors.rpmfusion.org/free/fedora"
 RPM_FREE_PKG="rpmfusion-free-release-${FEDORA_VER}.noarch.rpm"
@@ -179,6 +181,18 @@ instalar_pacote() {
 	esac
 }
 
+instalar_lote() {
+	mensagem "INFO" "Iniciando instalação de pacotes (DNF)"
+	for pacote in $PACOTES_DNF; do
+		instalar_pacote "dnf" "$pacote"
+	done
+
+	mensagem "INFO" "Iniciando instalação de aplicativos (Flatpak)"
+	for app in $PACOTES_FLATPAK; do
+		instalar_pacote "flatpak" "$app"
+	done
+}
+
 # Execução
 clear
 verifica_permissao
@@ -187,4 +201,4 @@ verifica_internet
 remover_programas
 repositorios_terceiros
 atualizar_sistema
-instalar_pacote dnf git
+instalar_lote
