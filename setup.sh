@@ -5,6 +5,9 @@ set -euo pipefail
 OS_RELEASE=/etc/os-release
 FEDORA_VER=$(rpm -E %fedora)
 
+USUARIO_REAL="${SUDO_USER:-$USER}"
+HOME_REAL="$(getent passwd "$USUARIO_REAL" | cut -d: -f6)"
+
 PACOTES_REMOVER="okular nheko rhythmbox libreoffice-*"
 PACOTES_DNF="git"
 PACOTES_FLATPAK=""
@@ -147,35 +150,38 @@ atualizar_sistema(){
 }
 
 instalar_pacote() {
-	case $1 in
-	"dnf")
-			if rpm -q "$2" &>/dev/null; then
-				mensagem "ALERTA" "Pacote DNF '$2' já está instalado"
+	local gerenciador=$1
+	local pacote=$2
+	
+	case $gerenciador in
+		"dnf")
+			if rpm -q "$pacote" &>/dev/null; then
+				mensagem "ALERTA" "Pacote DNF '$pacote' já está instalado"
 			else
-				mensagem "INFO" "Instalando pacote DNF: $2"
-				if dnf install -y "$2" &>/dev/null; then
-					mensagem "SUCESSO" "Pacote '$2' instalado com sucesso"
+				mensagem "INFO" "Instalando pacote DNF: $pacote"
+				if dnf install -y "$pacote" &>/dev/null; then
+					mensagem "SUCESSO" "Pacote '$pacote' instalado com sucesso"
 				else
-					mensagem "ERRO" "Falha ao instalar o pacote DNF '$2'"
+					mensagem "ERRO" "Falha ao instalar o pacote DNF '$pacote'"
 					return 1
 				fi
 			fi
 			;;
 		"flatpak")
-			if flatpak list --app --columns=application | grep -q "^$2$"; then
-				mensagem "ALERTA" "Aplicativo Flatpak '$2' já está instalado"
+			if flatpak list --app --columns=application | grep -q "^$pacote$"; then
+				mensagem "ALERTA" "Aplicativo Flatpak '$pacote' já está instalado"
 			else
-				mensagem "INFO" "Instalando Flatpak: $2"
-				if flatpak install -y flathub "$2" &>/dev/null; then
-					mensagem "SUCESSO" "Flatpak '$2' instalado com sucesso"
+				mensagem "INFO" "Instalando Flatpak: $pacote"
+				if flatpak install -y flathub "$pacote" &>/dev/null; then
+					mensagem "SUCESSO" "Flatpak '$pacote' instalado com sucesso"
 				else
-					mensagem "ERRO" "Falha ao instalar o Flatpak '$2'"
+					mensagem "ERRO" "Falha ao instalar o Flatpak '$pacote'"
 					return 1
 				fi
 			fi
 			;;
 		*)
-			mensagem "ERRO" "Gerenciador de pacotes desconhecido: $1"
+			mensagem "ERRO" "Gerenciador de pacotes desconhecido: $gerenciador"
 			return 1
 			;;
 	esac
