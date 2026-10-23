@@ -5,7 +5,7 @@ set -euo pipefail
 OS_RELEASE=/etc/os-release
 FEDORA_VER=$(rpm -E %fedora)
 
-PACOTES_REMOVER="okular libreoffice-*"
+PACOTES_REMOVER="okular nheko rhythmbox libreoffice-*"
 
 RPM_FREE_BASE="https://mirrors.rpmfusion.org/free/fedora"
 RPM_FREE_PKG="rpmfusion-free-release-${FEDORA_VER}.noarch.rpm"
