@@ -9,7 +9,7 @@ USUARIO_REAL="${SUDO_USER:-$USER}"
 HOME_REAL="$(getent passwd "$USUARIO_REAL" | cut -d: -f6)"
 
 PACOTES_REMOVER="okular nheko rhythmbox libreoffice-*"
-PACOTES_DNF="git"
+PACOTES_DNF="git zsh tmux shellcheck shfmt"
 PACOTES_FLATPAK=""
 
 RPM_FREE_BASE="https://mirrors.rpmfusion.org/free/fedora"
@@ -29,19 +29,22 @@ AMARELO=$'\e[1;33m'
 VERMELHO=$'\e[1;31m'
 RESETAR=$'\e[0m'
 
-mensagem(){
+mensagem() {
 	case "$1" in
-		"INFO") COR="$AZUL";;
-		"SUCESSO") COR="$VERDE";;
-		"ALERTA") COR="$AMARELO";;
-		"ERRO") COR="$VERMELHO";;
-		*) printf "%s[ERRO] Mensagem não identificada\n" "$VERMELHO"; exit 1;;
+		"INFO") COR="$AZUL" ;;
+		"SUCESSO") COR="$VERDE" ;;
+		"ALERTA") COR="$AMARELO" ;;
+		"ERRO") COR="$VERMELHO" ;;
+		*)
+			printf "%s[ERRO] Mensagem não identificada\n" "$VERMELHO"
+			exit 1
+			;;
 	esac
 
 	printf "%s[%s]%s %s\n" "$COR" "$1" "$RESETAR" "$2."
 }
 
-verifica_distro(){
+verifica_distro() {
 	if [[ -f "$OS_RELEASE" ]]; then
 		# shellcheck disable=SC1090
 		source "$OS_RELEASE"
@@ -59,8 +62,8 @@ verifica_distro(){
 	fi
 }
 
-verifica_internet(){
-	if ping -c 1 8.8.8.8 &> /dev/null; then
+verifica_internet() {
+	if ping -c 1 8.8.8.8 &>/dev/null; then
 		mensagem "SUCESSO" "Conexão com a internet ativa"
 	else
 		mensagem "ERRO" "Sem acesso à internet"
@@ -68,7 +71,7 @@ verifica_internet(){
 	fi
 }
 
-verifica_permissao(){
+verifica_permissao() {
 	if [ "$EUID" -eq 0 ]; then
 		mensagem "SUCESSO" "Permissão root confirmada"
 	else
@@ -77,7 +80,7 @@ verifica_permissao(){
 	fi
 }
 
-remover_programas(){
+remover_programas() {
 	mensagem "INFO" "Removendo programas não utilizados"
 	if dnf remove -y "$PACOTES_REMOVER" &>/dev/null; then
 		mensagem "SUCESSO" "Aplicativos removidos com sucesso"
@@ -93,7 +96,7 @@ remover_programas(){
 	fi
 }
 
-repositorios_terceiros(){
+repositorios_terceiros() {
 	#RPM Fusion Free
 	if rpm -q rpmfusion-free-release &>/dev/null; then
 		mensagem "ALERTA" "Repositório RPM Fusion Free já está configurado"
@@ -102,10 +105,10 @@ repositorios_terceiros(){
 
 		if dnf install -y "$RPM_FREE_URL" &>/dev/null; then
 			mensagem "SUCESSO" "RPM Fusion Free instalado"
-  		else
+		else
 			mensagem "ERRO" "Falha no RPM Fusion Free"
-	  		exit 1
-  		fi
+			exit 1
+		fi
 	fi
 	#RPM Fusion Nonfree
 	if rpm -q rpmfusion-nonfree-release &>/dev/null; then
@@ -115,31 +118,31 @@ repositorios_terceiros(){
 
 		if dnf install -y "$RPM_NONFREE_URL" &>/dev/null; then
 			mensagem "SUCESSO" "RPM Fusion Nonfree instalado"
-  		else
+		else
 			mensagem "ERRO" "Falha no RPM Fusion Nonfree"
-	  		exit 1
-  		fi
+			exit 1
+		fi
 	fi
 	#Flatpak
 	if command -v flatpak &>/dev/null; then
-  		if flatpak remote-list | grep -q "^flathub"; then
+		if flatpak remote-list | grep -q "^flathub"; then
 			mensagem "ALERTA" "Flathub já está configurado"
-  		else
+		else
 			mensagem "INFO" "Configurando Flathub"
-	  		if flatpak remote-add --if-not-exists flathub "$FLATHUB_URL"; then
+			if flatpak remote-add --if-not-exists flathub "$FLATHUB_URL"; then
 				mensagem "SUCESSO" "Flathub adicionado"
 			else
-	  			mensagem "ERRO" "Falha ao adicionar Flathub"
-		 		exit 1
+				mensagem "ERRO" "Falha ao adicionar Flathub"
+				exit 1
 			fi
-  		fi
+		fi
 	else
-  		mensagem "ERRO" "Flatpak não instalado"
+		mensagem "ERRO" "Flatpak não instalado"
 		exit 1
 	fi
 }
 
-atualizar_sistema(){
+atualizar_sistema() {
 	mensagem "INFO" "Atualizando pacotes do sistema"
 	if dnf upgrade -y --refresh &>/dev/null; then
 		mensagem "SUCESSO" "Sistema atualizado com sucesso"
@@ -206,19 +209,28 @@ instalar_via_curl() {
 	local argumento_extra="${4:-}"
 
 	if [ -n "$condicao_verificacao" ]; then
-		if sudo -u "$USUARIO_REAL" env HOME="$HOME_REAL" bash -c "$condicao_verificacao" &> /dev/null; then
+		if sudo -u "$USUARIO_REAL" env HOME="$HOME_REAL" bash -c "$condicao_verificacao" &>/dev/null; then
 			mensagem "ALERTA" "$nome já está instalado para o usuário $USUARIO_REAL"
 			return 0
 		fi
 	fi
 
 	mensagem "INFO" "Instalando $nome via script (curl)"
-	if sudo -u "$USUARIO_REAL" env HOME="$HOME_REAL" sh -c "$(curl -fsSL "$url")" "" "$argumento_extra" &> /dev/null; then
+	if sudo -u "$USUARIO_REAL" env HOME="$HOME_REAL" sh -c "$(curl -fsSL "$url")" "" "$argumento_extra" &>/dev/null; then
 		mensagem "SUCESSO" "$nome instalado com sucesso"
 	else
 		mensagem "ERRO" "Falha ao instalar o $nome"
 		return 1
 	fi
+}
+
+instalar_codecs_multimedia() {
+	mensagem "INFO" "Iniciando a instalação de codecs, multimedia e hardware"
+	dnf install -y ffmpeg gstreamer1-plugins-bad-freeworld gstreamer1-plugin-openh264 --allowerasing &>/dev/null
+	dnf group install -y multimedia &>/dev/null
+	dnf install -y mesa-va-drivers-freeworld &>/dev/null
+	mensagem "SUCESSO" "Instalado codecs, multimedia e hardware"
+	return 0
 }
 
 # Execução
@@ -229,13 +241,16 @@ verifica_internet
 remover_programas
 repositorios_terceiros
 atualizar_sistema
+instalar_codecs_multimedia
 instalar_lote
 
 instalar_via_curl "Oh My Zsh" \
-"https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" \
-"[ -d '$HOME_REAL/.oh-my-zsh' ]" \
-"--unattended"
+	"https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" \
+	"[ -d '$HOME_REAL/.oh-my-zsh' ]" \
+	"--unattended"
 
 instalar_via_curl "Zed Editor" \
-"https://zed.dev/install.sh" \
-"[ -x '$HOME_REAL/.local/bin/zed' ]"
+	"https://zed.dev/install.sh" \
+	"[ -x '$HOME_REAL/.local/bin/zed' ]"
+
+exit 0
