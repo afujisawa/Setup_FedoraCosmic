@@ -98,8 +98,8 @@ repositorios_terceiros(){
 		if dnf install -y "$RPM_FREE_URL" &>/dev/null; then
 			mensagem "SUCESSO" "RPM Fusion Free instalado"
   		else
-    		mensagem "ERRO" "Falha no RPM Fusion Free"
-      		exit 1
+			mensagem "ERRO" "Falha no RPM Fusion Free"
+	  		exit 1
   		fi
 	fi
 	#RPM Fusion Nonfree
@@ -111,26 +111,26 @@ repositorios_terceiros(){
 		if dnf install -y "$RPM_NONFREE_URL" &>/dev/null; then
 			mensagem "SUCESSO" "RPM Fusion Nonfree instalado"
   		else
-    		mensagem "ERRO" "Falha no RPM Fusion Nonfree"
-      		exit 1
+			mensagem "ERRO" "Falha no RPM Fusion Nonfree"
+	  		exit 1
   		fi
 	fi
 	#Flatpak
 	if command -v flatpak &>/dev/null; then
   		if flatpak remote-list | grep -q "^flathub"; then
-    		mensagem "ALERTA" "Flathub já está configurado"
+			mensagem "ALERTA" "Flathub já está configurado"
   		else
-    		mensagem "INFO" "Configurando Flathub"
-      		if flatpak remote-add --if-not-exists flathub "$FLATHUB_URL"; then
-        		mensagem "SUCESSO" "Flathub adicionado"
-    		else
-      			mensagem "ERRO" "Falha ao adicionar Flathub"
-         		exit 1
-    		fi
+			mensagem "INFO" "Configurando Flathub"
+	  		if flatpak remote-add --if-not-exists flathub "$FLATHUB_URL"; then
+				mensagem "SUCESSO" "Flathub adicionado"
+			else
+	  			mensagem "ERRO" "Falha ao adicionar Flathub"
+		 		exit 1
+			fi
   		fi
 	else
   		mensagem "ERRO" "Flatpak não instalado"
-    	exit 1
+		exit 1
 	fi
 }
 
@@ -144,6 +144,41 @@ atualizar_sistema(){
 	fi
 }
 
+instalar_pacote() {
+	case $1 in
+	"dnf")
+			if rpm -q "$2" &>/dev/null; then
+				mensagem "ALERTA" "Pacote DNF '$2' já está instalado"
+			else
+				mensagem "INFO" "Instalando pacote DNF: $2"
+				if dnf install -y "$2" &>/dev/null; then
+					mensagem "SUCESSO" "Pacote '$2' instalado com sucesso"
+				else
+					mensagem "ERRO" "Falha ao instalar o pacote DNF '$2'"
+					return 1
+				fi
+			fi
+			;;
+		"flatpak")
+			if flatpak list --app --columns=application | grep -q "^$2$"; then
+				mensagem "ALERTA" "Aplicativo Flatpak '$2' já está instalado"
+			else
+				mensagem "INFO" "Instalando Flatpak: $2"
+				if flatpak install -y flathub "$2" &>/dev/null; then
+					mensagem "SUCESSO" "Flatpak '$2' instalado com sucesso"
+				else
+					mensagem "ERRO" "Falha ao instalar o Flatpak '$2'"
+					return 1
+				fi
+			fi
+			;;
+		*)
+			mensagem "ERRO" "Gerenciador de pacotes desconhecido: $1"
+			return 1
+			;;
+	esac
+}
+
 # Execução
 clear
 verifica_permissao
@@ -152,3 +187,4 @@ verifica_internet
 remover_programas
 repositorios_terceiros
 atualizar_sistema
+instalar_pacote dnf git
