@@ -9,7 +9,7 @@ USUARIO_REAL="${SUDO_USER:-$USER}"
 HOME_REAL="$(getent passwd "$USUARIO_REAL" | cut -d: -f6)"
 
 PACOTES_REMOVER="okular nheko rhythmbox libreoffice-*"
-PACOTES_DNF="git zsh tmux shellcheck shfmt"
+PACOTES_DNF="git vim zsh oh-my-zsh tmux ShellCheck shfmt fastfetch vlc zed"
 PACOTES_FLATPAK=""
 
 RPM_FREE_BASE="https://mirrors.rpmfusion.org/free/fedora"
@@ -19,6 +19,8 @@ RPM_FREE_URL="${RPM_FREE_BASE}/${RPM_FREE_PKG}"
 RPM_NONFREE_BASE="https://mirrors.rpmfusion.org/nonfree/fedora"
 RPM_NONFREE_PKG="rpmfusion-nonfree-release-${FEDORA_VER}.noarch.rpm"
 RPM_NONFREE_URL="${RPM_NONFREE_BASE}/${RPM_NONFREE_PKG}"
+
+TERRA_URL="https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo"
 
 FLATHUB_URL="https://dl.flathub.org/repo/flathub.flatpakrepo"
 
@@ -35,9 +37,9 @@ RESETAR=$'\e[0m'
 mensagem() {
 	case "$1" in
 		"INFO") COR="$AZUL" ;;
-		"SUCESSO") COR="$VERDE" TOTAL_SUCESSO=$(( TOTAL_SUCESSO + 1 )) ;;
-		"ALERTA") COR="$AMARELO" TOTAL_SUCESSO=$(( TOTAL_SUCESSO + 1 )) ;;
-		"ERRO") COR="$VERMELHO" TOTAL_ERRO=$(( TOTAL_ERRO + 1 )) ;;
+		"SUCESSO") COR="$VERDE" TOTAL_SUCESSO=$((TOTAL_SUCESSO + 1)) ;;
+		"ALERTA") COR="$AMARELO" TOTAL_SUCESSO=$((TOTAL_SUCESSO + 1)) ;;
+		"ERRO") COR="$VERMELHO" TOTAL_ERRO=$((TOTAL_ERRO + 1)) ;;
 		*)
 			printf "%s[ERRO] Mensagem não identificada\n" "$VERMELHO"
 			exit 1
@@ -126,6 +128,21 @@ repositorios_terceiros() {
 			exit 1
 		fi
 	fi
+
+	# Terra (Fyra Labs)
+	if [[ -f /etc/yum.repos.d/terra.repo ]] || rpm -q terra-release &>/dev/null; then
+		mensagem "ALERTA" "Repositório Terra já está configurado"
+	else
+		mensagem "INFO" "Configurando o repositório Terra"
+		if dnf config-manager addrepo --from-repofile="$TERRA_URL" || dnf config-manager --add-repo "$TERRA_URL" &>/dev/null; then
+			echo "priority=100" | tee -a /etc/yum.repos.d/terra.repo >/dev/null
+			mensagem "SUCESSO" "Repositório Terra instalado"
+		else
+			mensagem "ERRO" "Falha ao instalar o repositório Terra"
+			exit 1
+		fi
+	fi
+
 	#Flatpak
 	if command -v flatpak &>/dev/null; then
 		if flatpak remote-list | grep -q "^flathub"; then
@@ -238,10 +255,10 @@ instalar_codecs_multimedia() {
 
 exibir_resumo() {
 	local status_final=0
-	
+
 	echo ""
 	echo "=========================================="
-	echo "          RESUMO DA EXECUÇÃO              "
+	echo "		  RESUMO DA EXECUÇÃO			  "
 	echo "=========================================="
 	mensagem "SUCESSO" "Ações bem-sucedidas: $TOTAL_SUCESSO"
 	if [ "$TOTAL_ERRO" -gt 0 ]; then
@@ -251,7 +268,7 @@ exibir_resumo() {
 		mensagem "SUCESSO" "Erros encontrados: $TOTAL_ERRO"
 		status_final=0
 	fi
-	
+
 	echo "=========================================="
 	return "$status_final"
 }
