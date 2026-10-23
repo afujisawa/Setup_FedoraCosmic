@@ -74,13 +74,13 @@ verifica_permissao(){
 
 remover_programas(){
 	mensagem "INFO" "Removendo programas não utilizados"
-	if dnf remove -y $PACOTES_REMOVER &>/dev/null; then
+	if dnf remove -y "$PACOTES_REMOVER" &>/dev/null; then
 		mensagem "SUCESSO" "Aplicativos removidos com sucesso"
 	else
 		mensagem "ERRO" "Falha ao remover os pacotes"
 		exit 1
 	fi
-	
+
 	if dnf autoremove -y &>/dev/null; then
 		mensagem "SUCESSO" "Limpeza de dependências concluída"
 	else
@@ -94,7 +94,7 @@ repositorios_terceiros(){
 		mensagem "ALERTA" "Repositório RPM Fusion Free já está configurado"
 	else
 		mensagem "INFO" "Configurando o repositório RPM Fusion Free"
-	
+
 		if dnf install -y "$RPM_FREE_URL" &>/dev/null; then
 			mensagem "SUCESSO" "RPM Fusion Free instalado"
   		else
@@ -107,7 +107,7 @@ repositorios_terceiros(){
 		mensagem "ALERTA" "Repositório RPM Fusion Nonfree já está configurado"
 	else
 		mensagem "INFO" "Configurando o repositório RPM Fusion Nonfree"
-	
+
 		if dnf install -y "$RPM_NONFREE_URL" &>/dev/null; then
 			mensagem "SUCESSO" "RPM Fusion Nonfree instalado"
   		else
