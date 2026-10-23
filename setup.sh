@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Parâmetros
 OS_RELEASE=/etc/os-release
+FEDORA_VER=$(rpm -E %fedora)
+
+RPM_FREE_BASE="https://mirrors.rpmfusion.org/free/fedora"
+RPM_FREE_PKG="rpmfusion-free-release-${FEDORA_VER}.noarch.rpm"
+RPM_FREE_URL="${RPM_FREE_BASE}/${RPM_FREE_PKG}"
+
+RPM_NONFREE_BASE="https://mirrors.rpmfusion.org/nonfree/fedora"
+RPM_NONFREE_PKG="rpmfusion-nonfree-release-${FEDORA_VER}.noarch.rpm"
+RPM_NONFREE_URL="${RPM_NONFREE_BASE}/${RPM_NONFREE_PKG}"
+
+FLATHUB_URL="https://dl.flathub.org/repo/flathub.flatpakrepo"
 
 #Cores
 AZUL=$'\e[1;34m'
@@ -40,7 +52,7 @@ verifica_distro(){
 }
 
 verifica_internet(){
-if ping -c 1 8.8.8.8 > /dev/null; then
+if ping -c 1 8.8.8.8 &> /dev/null; then
 		mensagem "SUCESSO" "Conexão com a internet ativa"
 	else
 		mensagem "ERRO" "Sem acesso à internet"
@@ -48,7 +60,64 @@ if ping -c 1 8.8.8.8 > /dev/null; then
 	fi
 }
 
+verifica_permissao(){
+	if [ ! "$EUID" -ne 0 ]; then
+		mensagem "SUCESSO" "Permissão root confirmada"
+	else
+		mensagem "ERRO" "Execute com o comando sudo"
+		exit 1
+	fi
+}
+
+repositorios_terceiros(){
+	#RPM Fusion Free
+	if rpm -q rpmfusion-free-release &>/dev/null; then
+		mensagem "ALERTA" "Repositório RPM Fusion Free já está configurado"
+	else
+		mensagem "INFO" "Configurando o repositório RPM Fusion Free"
+	
+		if dnf install -y "$RPM_FREE_URL" &>/dev/null; then
+			mensagem "SUCESSO" "RPM Fusion Free instalado"
+  		else
+    		mensagem "ERRO" "Falha no RPM Fusion Free"
+      		exit 1
+  		fi
+	fi
+	#RPM Fusion Nonfree
+	if rpm -q rpmfusion-nonfree-release &>/dev/null; then
+		mensagem "ALERTA" "Repositório RPM Fusion Nonfree já está configurado"
+	else
+		mensagem "INFO" "Configurando o repositório RPM Fusion Nonfree"
+	
+		if dnf install -y "$RPM_NONFREE_URL" &>/dev/null; then
+			mensagem "SUCESSO" "RPM Fusion Nonfree instalado"
+  		else
+    		mensagem "ERRO" "Falha no RPM Fusion Nonfree"
+      		exit 1
+  		fi
+	fi
+	#Flatpak
+	if command -v flatpak &>/dev/null; then
+  		if flatpak remote-list | grep -q "^flathub"; then
+    		mensagem "ALERTA" "Flathub já está configurado"
+  		else
+    		mensagem "INFO" "Configurando Flathub"
+      		if flatpak remote-add --if-not-exists flathub "$FLATHUB_URL"; then
+        		mensagem "SUCESSO" "Flathub adicionado"
+    		else
+      			mensagem "ERRO" "Falha ao adicionar Flathub"
+         		exit 1
+    		fi
+  		fi
+	else
+  		mensage "ERRO" "Flatpak não instalado"
+    	exit 
+	fi
+}
+
 # Execução
 clear
+verifica_permissao
 verifica_distro
 verifica_internet
+repositorios_terceiros
