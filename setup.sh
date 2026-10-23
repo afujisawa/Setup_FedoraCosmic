@@ -134,6 +134,16 @@ repositorios_terceiros(){
 	fi
 }
 
+atualizar_sistema(){
+	mensagem "INFO" "Atualizando pacotes do sistema"
+	if dnf upgrade -y --refresh &>/dev/null; then
+		mensagem "SUCESSO" "Sistema atualizado com sucesso"
+	else
+		mensagem "ERRO" "Falha ao atualizar o sistema"
+		exit 1
+	fi
+}
+
 # Execução
 clear
 verifica_permissao
@@ -141,3 +151,4 @@ verifica_distro
 verifica_internet
 remover_programas
 repositorios_terceiros
+atualizar_sistema
