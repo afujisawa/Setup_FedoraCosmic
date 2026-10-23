@@ -45,6 +45,7 @@ verifica_distro(){
 			mensagem "SUCESSO" "Distribuição Fedora detectada"
 		else
 			mensagem "ERRO" "Script exclusivo para distribuição Fedora"
+			exit 1
 		fi
 	else
 		mensagem "ERRO" "Não foi possível identificar a distribuição"
@@ -63,7 +64,7 @@ if ping -c 1 8.8.8.8 &> /dev/null; then
 }
 
 verifica_permissao(){
-	if [ ! "$EUID" -ne 0 ]; then
+	if [ "$EUID" -eq 0 ]; then
 		mensagem "SUCESSO" "Permissão root confirmada"
 	else
 		mensagem "ERRO" "Execute com o comando sudo"
@@ -128,8 +129,8 @@ repositorios_terceiros(){
     		fi
   		fi
 	else
-  		mensage "ERRO" "Flatpak não instalado"
-    	exit 
+  		mensagem "ERRO" "Flatpak não instalado"
+    	exit 1
 	fi
 }
 
