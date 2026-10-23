@@ -35,9 +35,9 @@ RESETAR=$'\e[0m'
 mensagem() {
 	case "$1" in
 		"INFO") COR="$AZUL" ;;
-		"SUCESSO") COR="$VERDE" TOTAL_SUCESSO=$(( TOTAL_SUCESSO + 1 ));;
-		"ALERTA") COR="$AMARELO" TOTAL_SUCESSO=$(( TOTAL_SUCESSO + 1 ));;
-		"ERRO") COR="$VERMELHO" TOTAL_ERRO=$(( TOTAL_ERRO + 1 ));;
+		"SUCESSO") COR="$VERDE" TOTAL_SUCESSO=$(( TOTAL_SUCESSO + 1 )) ;;
+		"ALERTA") COR="$AMARELO" TOTAL_SUCESSO=$(( TOTAL_SUCESSO + 1 )) ;;
+		"ERRO") COR="$VERMELHO" TOTAL_ERRO=$(( TOTAL_ERRO + 1 )) ;;
 		*)
 			printf "%s[ERRO] Mensagem não identificada\n" "$VERMELHO"
 			exit 1
@@ -236,20 +236,21 @@ instalar_codecs_multimedia() {
 	return 0
 }
 
-exibir_resumo(){
-    echo ""
-    echo "=========================================="
-    echo "          RESUMO DA EXECUÇÃO              "
-    echo "=========================================="
-    mensagem "SUCESSO" "Ações bem-sucedidas: $TOTAL_SUCESSO"
-    if [ "$TOTAL_ERRO" -gt 0 ]; then
-        mensagem "ERRO"   "Erros encontrados: $TOTAL_ERRO"
-        exit 1
-    else
-        mensagem "SUCESSO" "Erros encontrados: $TOTAL_ERRO"
-        exit 0
-    fi
-    echo "=========================================="
+# shellcheck disable=SC2317
+exibir_resumo() {
+	echo ""
+	echo "=========================================="
+	echo "          RESUMO DA EXECUÇÃO              "
+	echo "=========================================="
+	mensagem "SUCESSO" "Ações bem-sucedidas: $TOTAL_SUCESSO"
+	if [ "$TOTAL_ERRO" -gt 0 ]; then
+		mensagem "ERRO" "Erros encontrados: $TOTAL_ERRO"
+		return 1
+	else
+		mensagem "SUCESSO" "Erros encontrados: $TOTAL_ERRO"
+		return 0
+	fi
+	echo "=========================================="
 }
 
 # Execução
