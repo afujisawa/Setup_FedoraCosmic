@@ -9,7 +9,7 @@ USUARIO_REAL="${SUDO_USER:-$USER}"
 HOME_REAL="$(getent passwd "$USUARIO_REAL" | cut -d: -f6)"
 
 PACOTES_REMOVER="okular nheko rhythmbox libreoffice-*"
-PACOTES_DNF="git vim zsh oh-my-zsh tmux ShellCheck shfmt fastfetch vlc zed"
+PACOTES_DNF="git vim zsh tmux ShellCheck shfmt fastfetch vlc zed"
 PACOTES_FLATPAK=""
 
 RPM_FREE_BASE="https://mirrors.rpmfusion.org/free/fedora"
