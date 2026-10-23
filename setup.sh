@@ -236,8 +236,9 @@ instalar_codecs_multimedia() {
 	return 0
 }
 
-# shellcheck disable=SC2317
 exibir_resumo() {
+	local status_final=0
+	
 	echo ""
 	echo "=========================================="
 	echo "          RESUMO DA EXECUÇÃO              "
@@ -245,12 +246,14 @@ exibir_resumo() {
 	mensagem "SUCESSO" "Ações bem-sucedidas: $TOTAL_SUCESSO"
 	if [ "$TOTAL_ERRO" -gt 0 ]; then
 		mensagem "ERRO" "Erros encontrados: $TOTAL_ERRO"
-		return 1
+		status_final=1
 	else
 		mensagem "SUCESSO" "Erros encontrados: $TOTAL_ERRO"
-		return 0
+		status_final=0
 	fi
+	
 	echo "=========================================="
+	return "$status_final"
 }
 
 # Execução
