@@ -55,7 +55,7 @@ verifica_distro(){
 }
 
 verifica_internet(){
-if ping -c 1 8.8.8.8 &> /dev/null; then
+	if ping -c 1 8.8.8.8 &> /dev/null; then
 		mensagem "SUCESSO" "Conexão com a internet ativa"
 	else
 		mensagem "ERRO" "Sem acesso à internet"
