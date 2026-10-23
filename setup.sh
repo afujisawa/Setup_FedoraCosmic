@@ -22,6 +22,9 @@ RPM_NONFREE_URL="${RPM_NONFREE_BASE}/${RPM_NONFREE_PKG}"
 
 FLATHUB_URL="https://dl.flathub.org/repo/flathub.flatpakrepo"
 
+TOTAL_SUCESSO=0
+TOTAL_ERRO=0
+
 #Cores
 AZUL=$'\e[1;34m'
 VERDE=$'\e[1;32m'
@@ -32,9 +35,9 @@ RESETAR=$'\e[0m'
 mensagem() {
 	case "$1" in
 		"INFO") COR="$AZUL" ;;
-		"SUCESSO") COR="$VERDE" ;;
-		"ALERTA") COR="$AMARELO" ;;
-		"ERRO") COR="$VERMELHO" ;;
+		"SUCESSO") COR="$VERDE" TOTAL_SUCESSO=$(( TOTAL_SUCESSO + 1 ));;
+		"ALERTA") COR="$AMARELO" TOTAL_SUCESSO=$(( TOTAL_SUCESSO + 1 ));;
+		"ERRO") COR="$VERMELHO" TOTAL_ERRO=$(( TOTAL_ERRO + 1 ));;
 		*)
 			printf "%s[ERRO] Mensagem não identificada\n" "$VERMELHO"
 			exit 1
@@ -233,6 +236,22 @@ instalar_codecs_multimedia() {
 	return 0
 }
 
+exibir_resumo(){
+    echo ""
+    echo "=========================================="
+    echo "          RESUMO DA EXECUÇÃO              "
+    echo "=========================================="
+    mensagem "SUCESSO" "Ações bem-sucedidas: $TOTAL_SUCESSO"
+    if [ "$TOTAL_ERRO" -gt 0 ]; then
+        mensagem "ERRO"   "Erros encontrados: $TOTAL_ERRO"
+        exit 1
+    else
+        mensagem "SUCESSO" "Erros encontrados: $TOTAL_ERRO"
+        exit 0
+    fi
+    echo "=========================================="
+}
+
 # Execução
 clear
 verifica_permissao
@@ -253,4 +272,4 @@ instalar_via_curl "Zed Editor" \
 	"https://zed.dev/install.sh" \
 	"[ -x '$HOME_REAL/.local/bin/zed' ]"
 
-exit 0
+exibir_resumo
